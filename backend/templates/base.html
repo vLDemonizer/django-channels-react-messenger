@@ -1,5 +1,4 @@
 {% load static %} 
-{% load render_bundle from webpack_loader %}
 <!DOCTYPE html>
 <html lang="en">
 
@@ -27,8 +26,8 @@
         window.user = {{user}};
         window.chat = {{chat.id}};
     </script>
-    {% render_bundle 'main' %}
     {% endblock %}
+    <script src="{% static 'js/main.4e7d18dd.js' %}"></script>
 </body>
 
 </html>

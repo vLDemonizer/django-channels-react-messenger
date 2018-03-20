@@ -1,0 +1,18 @@
+version: '2'
+
+services:
+  redis:
+    image: redis
+  messenger:
+    image: messenger:app
+    ports:
+      - "8000:8000"
+    command: 
+      - python3 manage.py collectstatic --noinput
+      - python3 manage.py makemigrations
+      - python3 manage.py migrate
+      - python3 manage.py runserver 0.0.0.0:8000
+    volumes:
+        - /home/demonizer/security/messenger/backend:/root/messenger
+    links:
+      - redis
