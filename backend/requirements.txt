@@ -1,0 +1,5 @@
+django
+django-webpack-loader
+channels_redis
+channels
+djangorestframework

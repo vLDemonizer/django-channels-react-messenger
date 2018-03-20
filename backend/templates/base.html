@@ -1,0 +1,34 @@
+{% load static %} 
+{% load render_bundle from webpack_loader %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>{% block title %}Chatter{% endblock %}</title>
+    <link href="{% static 'css/bootstrap.min.css'%}" rel="stylesheet" id="bootstrap-css">
+    {% block non_essential %}
+    <link rel="stylesheet" href="{% static 'css/font-awesome.min.css'%}">
+    <link rel="stylesheet" href="{% static 'css/chat-room.css' %}" />
+    <script src="{% static 'js/jquery-1.11.1.min.js'%}"></script>
+    <script src="{% static 'js/bootstrap.min.js'%}"></script>
+    <script src="{% static 'js/main.js'%}"></script>
+    {% endblock %}
+</head>
+
+<body>
+    {% block content %}
+    <div class="container app">
+        <div id="root" class="row app-one"></div>
+    </div>
+    <script>
+        window.user = {{user}};
+        window.chat = {{chat.id}};
+    </script>
+    {% render_bundle 'main' %}
+    {% endblock %}
+</body>
+
+</html>
