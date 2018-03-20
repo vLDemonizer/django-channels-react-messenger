@@ -40,6 +40,7 @@ class Chat extends Component {
         };
     
         websocket.onmessage = (evt) => {
+            console.log(evt)
             if (evt.data.hasOwnProperty('command') && evt.data.hasOwnProperty('message')) {
                 let conversation = this.state.chat.messages;
                 console.log(evt.data.message)
