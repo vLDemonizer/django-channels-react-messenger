@@ -1,21 +1,26 @@
+import sys
+
+from django.conf import settings
+
 from channels.db import database_sync_to_async
 
+from Crypto.Cipher import PKCS1_OAEP, AES
+from Crypto.Hash import SHA256
+from Crypto.PublicKey import RSA
+from base64 import b64decode
+
+from .aes import Cryptor
 from .exceptions import ClientError
 from .models import Chat, Message
 
 
-# This decorator turns this function from a synchronous function into an async one
-# we can call from our async consumers, that handles Django DBs correctly.
-# For more, see http://channels.readthedocs.io/en/latest/topics/databases.html
 @database_sync_to_async
 def get_chat_or_error(chat_id, user):
     """
     Tries to fetch a chat for the user, checking permissions along the way.
     """
-    # Check if the user is logged in
     if not user.is_authenticated:
         raise ClientError("USER_HAS_TO_LOGIN")
-    # Find the chat they requested (by ID)
     try:
         chat = Chat.objects.get(pk=chat_id)
     except Chat.DoesNotExist:
@@ -24,12 +29,42 @@ def get_chat_or_error(chat_id, user):
 
 @database_sync_to_async
 def create_message(chat_id, user, message):
+    """
+    Creates a message object to keep on the db for later chat resume.
+    """
     if not user.is_authenticated:
         raise ClientError("USER_HAS_TO_LOGIN")
     try:
         chat = Chat.objects.get(pk=chat_id)
     except Chat.DoesNotExist:
         raise ClientError("chat_INVALID")
-    message = Message.objects.create(chat=chat, text=message)
+    message = Message.objects.create(chat=chat, text=message, sender=user)
     return message
-    
+
+def to_string(bytes):
+    return bytes.decode("utf-8")
+
+@database_sync_to_async
+def get_public_key(chat):
+    key_pair = RSA.generate(1024) 
+    private_key = to_string(key_pair.exportKey())
+    print(private_key, file=sys.stderr)
+    private = open("{0}/chat/perms/{1}_private.pem".format(settings.BASE_DIR, chat.name), "w+")
+    private.write(private_key)
+    private.close()
+    public_key = to_string(key_pair.publickey().exportKey())
+    print(public_key, file=sys.stderr)
+    return public_key
+
+@database_sync_to_async
+def rsa_decrypted_text(chat, text):
+    with open("{0}/chat/perms/{1}_private.pem".format(settings.BASE_DIR, chat.name), "r") as private:
+        private_key = private.read()
+        key = RSA.importKey(private_key)
+        cipher = PKCS1_OAEP.new(key, hashAlgo=SHA256)
+        decrypted_message = cipher.decrypt(b64decode(text))
+    return to_string(decrypted_message)
+
+@database_sync_to_async
+def aes_decrypted_text(chat, text):
+

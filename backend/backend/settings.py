@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 """
 
 import os
+from django.urls import reverse_lazy
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -27,7 +28,15 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+LOGIN_URL = reverse_lazy('login')
+LOGIN_REDIRECT_URL = reverse_lazy('home')
+LOGOUT_REDIRECT_URL = reverse_lazy('login')
 
+# Env vars
+for var in [
+    'REDIS_HOST',
+]:
+    globals()[var] = os.getenv(var)
 # Application definition
 
 INSTALLED_APPS = [
@@ -138,8 +147,6 @@ WEBPACK_LOADER = {
         }
 }
 
-redis_host = os.environ.get('REDIS_HOST', 'localhost')
-
 # Channel layer definitions
 # http://channels.readthedocs.io/en/latest/topics/channel_layers.html
 CHANNEL_LAYERS = {
@@ -147,7 +154,7 @@ CHANNEL_LAYERS = {
         # This example app uses the Redis channel layer implementation channels_redis
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [(redis_host, 6379)],
+            "hosts": [('redis', 6379)],
         },
     },
 }

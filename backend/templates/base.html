@@ -1,4 +1,5 @@
 {% load static %} 
+{% load render_bundle from webpack_loader %}
 <!DOCTYPE html>
 <html lang="en">
 
@@ -6,14 +7,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>{% block title %}Chatter{% endblock %}</title>
+    <title>{% block title %}Chatter | Chat{% endblock %}</title>
     <link href="{% static 'css/bootstrap.min.css'%}" rel="stylesheet" id="bootstrap-css">
     {% block non_essential %}
     <link rel="stylesheet" href="{% static 'css/font-awesome.min.css'%}">
     <link rel="stylesheet" href="{% static 'css/chat-room.css' %}" />
     <script src="{% static 'js/jquery-1.11.1.min.js'%}"></script>
     <script src="{% static 'js/bootstrap.min.js'%}"></script>
-    <script src="{% static 'js/main.js'%}"></script>
+    <script src="{% static 'js/chatMain.js'%}"></script>
     {% endblock %}
 </head>
 
@@ -23,11 +24,16 @@
         <div id="root" class="row app-one"></div>
     </div>
     <script>
-        window.user = {{user}};
-        window.chat = {{chat.id}};
+        window.user = {{request.user.id}};
+        window.chat = {{chat}};
+        window.username = "{{request.user.username}}";
+        console.log(window.user, window.chat, window.username)
     </script>
+    <script src="{% static 'js/main.js' %}"></script>
+    {% comment %}
+    {% render_bundle 'main' %}
+    {% endcomment %}
     {% endblock %}
-    <script src="{% static 'js/main.4e7d18dd.js' %}"></script>
 </body>
 
 </html>

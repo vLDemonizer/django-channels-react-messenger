@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import $ from 'jquery';
 import axios from 'axios';
 
-axios.defaults.xsrfHeaderName = "X-CSRFTOKEN";
+axios.defaults.xsrfHeaderName = "X-CSRFToken";
 axios.defaults.xsrfCookieName = "csrftoken";
 
 class ContactList extends Component {
@@ -16,7 +16,7 @@ class ContactList extends Component {
     componentDidMount() {
         axios.get('/users')
             .then(response => this.setState({users: response.data}))
-            .catch(error => console.log(error))
+            .catch(error => console.log(error, 1))
     }
 
     render() {
@@ -56,7 +56,7 @@ class ContactList extends Component {
                                     console.log(response)
                                     this.props.updateMainChat(response.data)
                                 })
-                                .catch(error => console.log(error));
+                                .catch(error => console.log(error, 2));
                             
                             $(".side-two").css({
                                 "left": "-100%"

@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import $ from 'jquery';
-import Message from './Message'
+import forge from 'node-forge';
+import Message from './Message';
 
 class Chat extends Component {
     constructor(props) {
@@ -10,12 +11,17 @@ class Chat extends Component {
                 messages: [],
                 id: window.chat
             },
-            socket: new WebSocket('ws://localhost:8000/chat/stream/'),
+            type: 'rsa',
+            socket: new WebSocket('ws://' + window.location.host +'/chat/stream/'),
+            publicKey: '',
         };
     }
 
     componentDidMount() {
         this.setupWebsocket();
+        if (typeof this.messagesDiv !== "undefined") {
+            this.messagesDiv.scrollTop = this.messagesDiv.scrollHeight;
+        }
     }
 
     componentWillReceiveProps(nextProps) {
@@ -33,18 +39,34 @@ class Chat extends Component {
 
     }
 
+    componentDidUpdate() {
+        if (typeof this.messagesDiv !== "undefined") {
+            this.messagesDiv.scrollTop = this.messagesDiv.scrollHeight;
+        }
+    }
+
+    componentWillUnmount() {
+        this.state.ws.close();
+    }
+
     setupWebsocket() {
         let websocket = this.state.socket;
-        websocket.onopen = () => () => {
+        websocket.onopen = () => {
             console.log('open')
         };
     
         websocket.onmessage = (evt) => {
-            console.log(evt)
-            if (evt.data.hasOwnProperty('command') && evt.data.hasOwnProperty('message')) {
+            let data = JSON.parse(evt.data)
+            if ('key' in data) {
+                console.log(data)
+                this.setState({
+                    publicKey: forge.pki.publicKeyFromPem(data.key)
+                });
+            }
+            else if ('message' in data) {
                 let conversation = this.state.chat.messages;
-                console.log(evt.data.message)
-                conversation.push(evt.data);
+                console.log(data.message)
+                conversation.push(data.message)
                 this.setState({messages: conversation});
             }
         };
@@ -54,23 +76,60 @@ class Chat extends Component {
         }
     }
 
-    componentWillUnmount() {
-        this.state.ws.close();
-      }
+    rsaEncrypt(text) {
+        let encryptedMessage = this.state.publicKey.encrypt(text, "RSA-OAEP", {
+            md: forge.md.sha256.create(),
+            mgf1: forge.mgf1.create()
+        });
+        console.log(encryptedMessage)
+        let messageBase64 = forge.util.encode64(encryptedMessage);
+        console.log(messageBase64)
+        let message = {
+            command: 'send',
+            chat: chat.id,
+            message: messageBase64,
+            user: window.user,
+            type: this.state.type
+        };
+        this.state.socket.send(JSON.stringify(message));
+    }
+
+    aesEncrypt(text) {
+        var Crypto = require('cryptojs');
+        Crypto = Crypto.Crypto;
+
+        var KEY = 'This is a key123';
+        var IV = 'This is an IV456';
+        var MODE = new Crypto.mode.CFB(Crypto.pad.ZeroPadding);
+
+        var plaintext = 'The answer is no';
+        var input_bytes = Crypto.charenc.UTF8.stringToBytes(plaintext);
+        var key = Crypto.charenc.UTF8.stringToBytes(KEY);
+        var options = {iv: Crypto.charenc.UTF8.stringToBytes(IV), asBytes: true, mode: MODE};
+        var encrypted = Crypto.AES.encrypt(input_bytes, key, options);
+        var encrypted_hex = Crypto.util.bytesToHex(encrypted);
+        console.log(encrypted_hex); // this is the value you send over the wire
+
+        output_bytes = Crypto.util.hexToBytes(encrypted_hex);
+        output_plaintext_bytes = Crypto.AES.decrypt(output_bytes, key, options);
+        output_plaintext = Crypto.charenc.UTF8.bytesToString(output_plaintext_bytes);
+        console.log(output_plaintext); // result: 'The answer is no'
+    }
 
     render() {
         const user = window.user;
         const chat = this.props.chat;
         let messages = '';
+        if (this.state.chat.id === 0) {
+            return <div className="col-sm-8 conversation"></div>
+        }
         if (chat) {
-            console.log(chat.messages)
             messages = chat.messages.map(message => <Message 
                 key={message.id} 
-                classType={chat.sender.id !== user ? 'receiver' : 'sender'} 
+                classType={message.sender.id !== user ? 'receiver' : 'sender'} 
                 text={message.text} 
                 date_sent={message.date_sent} 
             />);
-            console.log(messages)
         }
 
         return (
@@ -82,14 +141,18 @@ class Chat extends Component {
                         </div>
                     </div>
                     <div className="col-sm-8 col-xs-7 heading-name">
-                        <a className="heading-name-meta">{chat ? chat.receiver.username : ''}</a>
+                        <a className="heading-name-meta">
+                            <span className="name-meta">
+                                {!chat ? '' : chat.users[0].id != window.user ? chat.users[0].username : chat.users[1].username }
+                            </span>
+                        </a>
                         <span className="heading-online">Online</span>
                     </div>
                     <div className="col-sm-1 col-xs-1  heading-dot pull-right">
                         <i className="fa fa-ellipsis-v fa-2x  pull-right" aria-hidden="true"></i>
                     </div>
                 </div>
-                <div className="row message" id="conversation">
+                <div className="row message" id="conversation" ref={messages => {this.messagesDiv = messages;}}>
                     <br />
                     {messages}
                 </div>
@@ -105,12 +168,14 @@ class Chat extends Component {
                         <i className="fa fa-microphone fa-2x" aria-hidden="true"></i>
                     </div>
                     <div className="col-sm-1 col-xs-1 reply-send" onClick={() => {
-                        let message = {
-                            command: 'send',
-                            chat: chat.id,
-                            message: this.messageText.value,
-                        };
-                        this.state.socket.send(JSON.stringify(message));
+                        let type = this.state.type;
+                        let text = this.messageText.value;
+                        console.log(text);
+                        if (type === 'rsa') {
+                            this.rsaEncrypt(text);
+                        } else {
+                            this.aesEncrypt(text);
+                        }
                         $('#comment').val('');
                     }}>
                         <i className="fa fa-send fa-2x" aria-hidden="true"></i>

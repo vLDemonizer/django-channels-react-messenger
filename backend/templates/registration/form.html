@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+<a href="{% url 'create-user'%}" class="btn btn-primary">Register</a>
+<form method="post" style="background-color:aliceblue; margin-top:10%; margin-left:10%; margin-right:10%;">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input class="btn btn-primary" type="submit" value="Create" />
+</form>
+{% endblock %}
+

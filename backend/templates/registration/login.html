@@ -1,14 +1,1 @@
-{% extends "base.html" %}
-
-{% block title %}Login{% endblock %}
-{% block non_essentials %}{% endblock %}
-
-{% block content %}
-
-    <form action="." method="POST">
-        {{ form }}
-        {% csrf_token %}
-        <button>Login</button>
-    </form>
-
-{% endblock %}
+{% extends "registration/form.html" %}

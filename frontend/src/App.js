@@ -5,6 +5,9 @@ import ChatList from './components/ChatList';
 import ContactList from './components/ContactList';
 import axios from 'axios';
 
+axios.defaults.xsrfHeaderName = "X-CSRFToken";
+axios.defaults.xsrfCookieName = "csrftoken";
+
 
 class App extends Component {
   constructor(props) {
@@ -12,7 +15,8 @@ class App extends Component {
     this.state = {
       mainChat: null,
       chats: [],
-    }
+      user: ''
+    };
   }
 
   componentDidMount() {
@@ -21,7 +25,12 @@ class App extends Component {
         chats: response.data,
         mainChat: response.data[0]
       }))
-      .catch(error => console.log(error))
+      .catch(error => console.log(error,4));
+    axios.get('/users/' + window.user + '/')
+      .then(response => this.setState({
+        user: response.data
+      }))
+      .catch(error => console.log(error,3));
   }
   
   render() {
@@ -34,7 +43,7 @@ class App extends Component {
                 .then(response => this.setState({
                   chats: response.data
                 }))
-                .catch(error => console.log(error))
+                .catch(error => console.log(error,5))
             }
           } 
         />

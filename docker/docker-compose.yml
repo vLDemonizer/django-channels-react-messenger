@@ -1,18 +1,21 @@
 version: '2'
 
+volumes:
+  redisdata:
+
 services:
   redis:
-    image: redis
+    image: redis:4.0.9
+    volumes:
+      - 'redisdata:/data'
   messenger:
-    image: messenger:app
+    image: messenger
     ports:
       - "8000:8000"
-    command: 
-      - python3 manage.py collectstatic --noinput
-      - python3 manage.py makemigrations
-      - python3 manage.py migrate
-      - python3 manage.py runserver 0.0.0.0:8000
+      - "3000:3000"
     volumes:
-        - /home/demonizer/security/messenger/backend:/root/messenger
+        - /home/demonizer/projects/security/messenger:/root/messenger
+    environment:
+      - REDIST_HOST=redis
     links:
       - redis

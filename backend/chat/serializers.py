@@ -17,11 +17,11 @@ class ChatSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Chat
-        fields = ('receiver', 'sender', 'messages', 'id')
+        fields = ('users', 'name', 'messages', 'id')
         depth = 1
 
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
-        model = models.User
+        model = User
         fields = '__all__'
