@@ -116,6 +116,6 @@ if ! shopt -oq posix; then
   fi
 fi
 
-alias collect='cd frontend && npm run build && cd ../backend && python3 manage.py collectstatic --noinput && cd ..'
+alias collect='cd ~/messenger/frontend && npm run build && cd ../backend && python3 manage.py collectstatic --noinput && cd ..'
 
 export SVGA_VGPU10=0

@@ -2,6 +2,8 @@ import React, { Component } from 'react';
 import $ from 'jquery';
 import forge from 'node-forge';
 import Message from './Message';
+import CryptoJS from 'crypto-js';
+
 
 class Chat extends Component {
     constructor(props) {
@@ -86,7 +88,7 @@ class Chat extends Component {
         console.log(messageBase64)
         let message = {
             command: 'send',
-            chat: chat.id,
+            chat: this.state.chat.id,
             message: messageBase64,
             user: window.user,
             type: this.state.type
@@ -95,25 +97,20 @@ class Chat extends Component {
     }
 
     aesEncrypt(text) {
-        var Crypto = require('cryptojs');
-        Crypto = Crypto.Crypto;
-
-        var KEY = 'This is a key123';
-        var IV = 'This is an IV456';
-        var MODE = new Crypto.mode.CFB(Crypto.pad.ZeroPadding);
-
-        var plaintext = 'The answer is no';
-        var input_bytes = Crypto.charenc.UTF8.stringToBytes(plaintext);
-        var key = Crypto.charenc.UTF8.stringToBytes(KEY);
-        var options = {iv: Crypto.charenc.UTF8.stringToBytes(IV), asBytes: true, mode: MODE};
-        var encrypted = Crypto.AES.encrypt(input_bytes, key, options);
-        var encrypted_hex = Crypto.util.bytesToHex(encrypted);
-        console.log(encrypted_hex); // this is the value you send over the wire
-
-        output_bytes = Crypto.util.hexToBytes(encrypted_hex);
-        output_plaintext_bytes = Crypto.AES.decrypt(output_bytes, key, options);
-        output_plaintext = Crypto.charenc.UTF8.bytesToString(output_plaintext_bytes);
-        console.log(output_plaintext); // result: 'The answer is no'
+        var key = CryptoJS.enc.Utf8.parse('1234567890123456');
+        var iv = CryptoJS.enc.Utf8.parse('this is a passph');
+        
+        var encrypted = CryptoJS.AES.encrypt(text, key, {iv: iv});
+        let encrypted_text = iv.concat(encrypted.ciphertext).toString(CryptoJS.enc.Base64);
+        console.log(encrypted_text); 
+        let message = {
+            command: 'send',
+            chat: this.state.chat.id,
+            message: encrypted_text,
+            user: window.user,
+            type: this.state.type
+        };
+        this.state.socket.send(JSON.stringify(message));
     }
 
     render() {
@@ -158,7 +155,14 @@ class Chat extends Component {
                 </div>
 
                 <div className="row reply">
-                    <div className="col-sm-1 col-xs-1 reply-emojis">
+                    <div className="col-sm-1 col-xs-1 reply-emojis" onClick={() => {
+                        if (this.state.type === 'rsa') {
+                            this.setState({type: 'aes'});
+                        } else {
+                            this.setState({type: 'rsa'});
+                        }
+                        console.log(this.state.type);
+                    }}>
                         <i className="fa fa-smile-o fa-2x"></i>
                     </div>
                     <div className="col-sm-9 col-xs-9 reply-main">

@@ -17,7 +17,11 @@ def encrypt(key, iv, plaintext):
 
 
 def decrypt(key, iv, encrypted_text):
-    aes = AES.new(key, MODE, iv, segment_size=SEGMENT_SIZE)
+    KEY = 'This is a key123'
+    IV = 'This is an IV456'
+    MODE = AES.MODE_CFB
+    SEGMENT_SIZE = 128
+    aes = AES.new(KEY, MODE, IV, segment_size=SEGMENT_SIZE)
     encrypted_text_bytes = binascii.a2b_hex(encrypted_text)
     decrypted_text = aes.decrypt(encrypted_text_bytes)
     decrypted_text = _unpad_string(decrypted_text)
