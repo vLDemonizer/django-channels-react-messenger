@@ -22,3 +22,5 @@ yarn-error.log*
 
 *.pyc
 package-lock.json
+/perms/
+*.sqlite3
